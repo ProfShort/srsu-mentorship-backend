@@ -8,7 +8,10 @@ const pool = require('./db');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://srsu-mentorship.vercel.app', 'https://srsu-mentorship-8wnatd86d-glenn-shorts-projects.vercel.app'],
+    credentials: true
+}));;
 app.use(express.json());
 
 // Import routes
