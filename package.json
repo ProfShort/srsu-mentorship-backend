@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "SRSU Mentorship Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,6 +13,10 @@
     "dotenv": "^17.0.0",
     "pg": "^8.11.0",
     "bcrypt": "^6.0.0",
-    "jsonwebtoken": "^9.0.0"
-  }
+    "jsonwebtoken": "^9.0.0",
+    "openai": "^4.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

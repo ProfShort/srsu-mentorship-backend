@@ -2,56 +2,82 @@
 const router = require('express').Router();
 const pool = require('../db');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');      
 
 // Register new mentor
 router.post('/register', async (req, res) => {
     try {
         console.log('Registration attempt:', req.body);
-        const { email, password, firstName, lastName, primaryApproach } = req.body;
-        
+        const { 
+            email, 
+            password, 
+            firstName, 
+            lastName, 
+            primaryApproach,
+            secondaryApproach,
+            tertiaryApproach 
+        } = req.body; 
+
         // Check if user exists
         const userExists = await pool.query(
             'SELECT * FROM mentors WHERE email = $1',
             [email]
         );
-        
-        if (userExists.rows.length > 0) {
-            return res.status(400).json({ error: 'Email already registered' });
+
+        if (userExists.rows.length > 0) { 
+            return res.status(400).json({ error: 'Email already registered' });     
         }
-        
+
         // Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
+
         // Create user
-        const newUser = await pool.query(
-            `INSERT INTO mentors (email, password, first_name, last_name, primary_approach)
-             VALUES ($1, $2, $3, $4, $5) 
-             RETURNING id, email, first_name, last_name, primary_approach`,
-            [email, hashedPassword, firstName, lastName, primaryApproach]
+        const newUser = await pool.query( 
+            `INSERT INTO mentors (
+                email, 
+                password, 
+                first_name, 
+                last_name, 
+                primary_approach, 
+                secondary_approach, 
+                tertiary_approach
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)  
+            RETURNING id, email, first_name, last_name, primary_approach, secondary_approach, tertiary_approach`,
+            [
+                email, 
+                hashedPassword, 
+                firstName, 
+                lastName, 
+                primaryApproach, 
+                secondaryApproach || null, 
+                tertiaryApproach || null
+            ]
         );
-        
+
         console.log('User created:', newUser.rows[0]);
-        
+
         // Create token
         const token = jwt.sign(
-            { 
-                id: newUser.rows[0].id, 
-                email: newUser.rows[0].email 
+            {
+                id: newUser.rows[0].id,   
+                email: newUser.rows[0].email
             },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
         );
-        
+
         res.status(201).json({
             message: 'Registration successful',
             token,
             user: {
-                id: newUser.rows[0].id,
+                id: newUser.rows[0].id,   
                 email: newUser.rows[0].email,
-                name: `${newUser.rows[0].first_name} ${newUser.rows[0].last_name}`,
-                primaryApproach: newUser.rows[0].primary_approach
+                name: `${newUser.rows[0].first_name} ${newUser.rows[0].last_name}`, 
+                primaryApproach: newUser.rows[0].primary_approach,
+                secondaryApproach: newUser.rows[0].secondary_approach,
+                tertiaryApproach: newUser.rows[0].tertiary_approach
             }
         });
     } catch (error) {
@@ -65,44 +91,46 @@ router.post('/login', async (req, res) => {
     try {
         console.log('Login attempt:', req.body.email);
         const { email, password } = req.body;
-        
+
         // Find user
-        const user = await pool.query(
+        const user = await pool.query(    
             'SELECT * FROM mentors WHERE email = $1',
             [email]
         );
-        
-        if (user.rows.length === 0) {
+
+        if (user.rows.length === 0) {     
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        
+
         // Check password
         const validPassword = await bcrypt.compare(password, user.rows[0].password);
-        
+
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        
+
         // Create token
         const token = jwt.sign(
-            { 
-                id: user.rows[0].id, 
+            {
+                id: user.rows[0].id,      
                 email: user.rows[0].email 
             },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
         );
-        
+
         console.log('Login successful for:', email);
-        
+
         res.json({
-            message: 'Login successful',
+            message: 'Login successful',  
             token,
             user: {
-                id: user.rows[0].id,
+                id: user.rows[0].id,      
                 email: user.rows[0].email,
-                name: `${user.rows[0].first_name} ${user.rows[0].last_name}`,
-                primaryApproach: user.rows[0].primary_approach
+                name: `${user.rows[0].first_name} ${user.rows[0].last_name}`,       
+                primaryApproach: user.rows[0].primary_approach,
+                secondaryApproach: user.rows[0].secondary_approach,
+                tertiaryApproach: user.rows[0].tertiary_approach
             }
         });
     } catch (error) {
